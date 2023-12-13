@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "393458044744",
+    "project_id": "sos-vision",
+    "storage_bucket": "sos-vision.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:393458044744:android:58ebb090dafeb160c2ad7d",
+        "android_client_info": {
+          "package_name": "com.example.sos_vision"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKJOzjIPIDwuTZIPZRuMnNbfHvchPkju4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
