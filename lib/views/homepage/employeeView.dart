@@ -5,11 +5,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter/services.dart';
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:sos_vision/models/alert.dart';
+import 'package:sos_vision/models/alertPivot.dart';
 import 'package:sos_vision/models/employee.dart';
+import 'package:sos_vision/services/api_services.dart';
 import 'package:sos_vision/services/firbase_sevices.dart';
 import 'package:sos_vision/views/constants.dart';
+import 'package:sos_vision/services/local_db_services.dart';
 
 class EmployeeView extends StatefulWidget {
   const EmployeeView({super.key});
@@ -20,31 +24,53 @@ class EmployeeView extends StatefulWidget {
 
 class _EmployeeViewState extends State<EmployeeView> {
   bool isPressed = false;
-
+  Employee? employee;
   bool sirene = false;
+  double? lat;
+  double? long;
+
+  void initState() {
+    super.initState();
+    fetchEmployeeInformation();
+    getLocation();
+  }
+
+  void fetchEmployeeInformation() async {
+    final Employee? loggedInEmployee =
+        await DatabaseManager.instance.getLoggedInEmployee();
+
+    if (loggedInEmployee != null) {
+      setState(() {
+        employee = loggedInEmployee;
+      });
+    }
+  }
+
+  void getLocation() async {
+    await Geolocator.checkPermission();
+    await Geolocator.requestPermission();
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
+    setState(() {
+      lat = position.latitude;
+      long = position.longitude;
+    });
+  }
 
   void alert() async {
-    await addAlertPivot(
-      alert: Alert(
-        alertDatetime: Timestamp.now(),
-        alertId: 123,
-        alertLocation: GeoPoint(5.34877, -4.1444797),
-        alertStatus: 'IN DANGER',
-        alertType: 'NEED HELP',
-        companyId: 456,
-      ),
-      employee: Employee(
-        companyId: 456,
-        employeeId: 789,
-        firstname: 'John',
-        password: "Kind@1404",
-        lastname: 'Doe',
-        phone_number: '+1234567890',
-        role: 'USER',
-        function: 'Software Developer',
-      ),
-      employeeAlertId: 1,
-    );
+    await addAlertApi(
+        AlertPivot(
+          alert: Alert(
+            alertDatetime: Timestamp.now(),
+            alertLocation: GeoPoint(long!, lat!),
+            alertStatus: 'IN DANGER',
+            alertType: 'NEED HELP',
+            companyId: employee!.companyId,
+          ),
+          employee: employee!,
+        ),
+        long!,
+        lat!);
 
     AwesomeNotifications().createNotification(
       content: NotificationContent(
@@ -53,7 +79,7 @@ class _EmployeeViewState extends State<EmployeeView> {
         actionType: ActionType.Default,
         largeIcon:
             "https://storage.googleapis.com/cms-storage-bucket/0dbfcc7a59cd1cf16282.png",
-        title: 'Harouna KINDA 🆘🆘🆘',
+        title: '${employee!.lastname} ${employee!.firstname} 🆘🆘🆘',
         body: 'needs help ✋✋✋',
         notificationLayout: NotificationLayout.Default,
         wakeUpScreen: true,

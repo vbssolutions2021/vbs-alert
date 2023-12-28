@@ -1,9 +1,13 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:icons_plus/icons_plus.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:sos_vision/models/apiResponseModel.dart';
+import 'package:sos_vision/services/api_services.dart';
+import 'package:sos_vision/services/local_db_services.dart';
 import 'package:sos_vision/views/components/defaltBtn.dart';
 import 'package:sos_vision/views/components/defaultTextField.dart';
 import 'package:sos_vision/views/constants.dart';
@@ -26,11 +30,26 @@ class _LoginpageState extends State<Loginpage> {
     color: kSecondaryColor,
     size: 50.0,
   );
+  final DatabaseManager dbManager = DatabaseManager.instance;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   TextEditingController _phoneController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   void toStart() async {
     if (!isAgree) {
+      Fluttertoast.showToast(
+          msg:
+              "Vous n'avez pas encore accepter les conditions et politiques de confidentialités.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 3,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0);
     } else {
       //Go to login Page
       toPage(1);
@@ -41,9 +60,27 @@ class _LoginpageState extends State<Loginpage> {
     setState(() {
       isLogin = true;
     });
-    await Future.delayed(Duration(milliseconds: 3000), () {
-      toPage(2);
-    });
+    ApiResponseModel response = await loginAPI(phone, password);
+
+    if (response.message == "L'utilisateur s'est connecté avec succès.") {
+      Navigator.push(
+          context,
+          PageTransition(
+              duration: Duration(milliseconds: 1000),
+              type: PageTransitionType.scale,
+              alignment: Alignment.bottomCenter,
+              child: Homepage()));
+    } else {
+      Fluttertoast.showToast(
+          msg: "${response.message}",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 3,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    }
+
     setState(() {
       isLogin = false;
     });
@@ -309,9 +346,6 @@ class _LoginpageState extends State<Loginpage> {
                                                         _phoneController.text,
                                                         _passwordController
                                                             .text);
-
-                                                    _passwordController.clear();
-                                                    _phoneController.clear();
                                                   },
                                                   titleSize: 15,
                                                   title: "SE CONNECTER",

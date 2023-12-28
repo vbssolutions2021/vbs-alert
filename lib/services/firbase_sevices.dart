@@ -3,9 +3,10 @@ import 'package:sos_vision/models/alert.dart';
 import 'package:sos_vision/models/alertPivot.dart';
 import 'package:sos_vision/models/employee.dart';
 
-Stream<List<AlertPivot>> streamAlertPivots() {
+Stream<List<AlertPivot>> streamAlertPivots(int companyId) {
   return FirebaseFirestore.instance
       .collection('alert_pivot')
+      .where('companyId', isEqualTo: companyId)
       .snapshots()
       .map((querySnapshot) {
     return querySnapshot.docs

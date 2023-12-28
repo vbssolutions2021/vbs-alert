@@ -12,6 +12,7 @@ import 'package:sos_vision/models/alert.dart';
 import 'package:sos_vision/models/alertPivot.dart';
 import 'package:sos_vision/models/employee.dart';
 import 'package:sos_vision/services/firbase_sevices.dart';
+import 'package:sos_vision/services/local_db_services.dart';
 import "package:sos_vision/views/constants.dart";
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:sos_vision/views/homepage/components/accordionListItem.dart';
@@ -28,12 +29,38 @@ class AdminView extends StatefulWidget {
 
 class _AdminViewState extends State<AdminView> {
   bool sosStarted = false;
-  double lat = 12.3095079;
-  double long = -1.5389797;
-  @override
+  bool isPressed = false;
+  Employee? employee;
+
+  double? lat;
+  double? long;
+
   void initState() {
     super.initState();
-    //launchPermissions();
+    fetchEmployeeInformation();
+    getLocation();
+  }
+
+  void fetchEmployeeInformation() async {
+    final Employee? loggedInEmployee =
+        await DatabaseManager.instance.getLoggedInEmployee();
+
+    if (loggedInEmployee != null) {
+      setState(() {
+        employee = loggedInEmployee;
+      });
+    }
+  }
+
+  void getLocation() async {
+    await Geolocator.checkPermission();
+    await Geolocator.requestPermission();
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
+    setState(() {
+      lat = position.latitude;
+      long = position.longitude;
+    });
   }
 
   void alert() async {
@@ -47,15 +74,16 @@ class _AdminViewState extends State<AdminView> {
         companyId: 456,
       ),
       employee: Employee(
-        companyId: 456,
-        employeeId: 789,
-        firstname: 'John',
-        password: "Kind@1404",
-        lastname: 'Doe',
-        phone_number: '+1234567890',
-        role: 'USER',
-        function: 'Software Developer',
-      ),
+          companyId: 456,
+          employeeId: 789,
+          firstname: 'John',
+          password: "Kind@1404",
+          lastname: 'Doe',
+          phone_number: '+1234567890',
+          role: 'USER',
+          job: 'Software Developer',
+          companyName: "VBS",
+          profilUrl: ""),
       employeeAlertId: 1,
     );
     FlutterRingtonePlayer.play(
@@ -71,17 +99,7 @@ class _AdminViewState extends State<AdminView> {
     FlutterRingtonePlayer.stop();
   }
 
-  void launchPermissions() async {
-    await Geolocator.checkPermission();
-    Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.low)
-        .then((position) {
-      setState(() {
-        lat = position.latitude;
-        long = position.longitude;
-      });
-    });
-    //await telephony.requestPhoneAndSmsPermissions;
-  }
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +164,7 @@ class _AdminViewState extends State<AdminView> {
                     height: kHeight(context) * 0.8,
                     child: FlutterMap(
                       options: MapOptions(
-                        initialCenter: LatLng(lat, long),
+                        initialCenter: LatLng(lat!, long!),
                         initialZoom: 16,
                       ),
                       children: [
@@ -157,7 +175,7 @@ class _AdminViewState extends State<AdminView> {
                         ),
                         StreamBuilder<List<AlertPivot>>(
                           stream:
-                              streamAlertPivots(), // Utilisez la fonction de streaming que nous avons définie précédemment
+                              streamAlertPivots(employee!.companyId), // Utilisez la fonction de streaming que nous avons définie précédemment
                           builder: (context, snapshot) {
                             if (snapshot.hasError) {
                               return Text('Error: ${snapshot.error}');
@@ -244,7 +262,7 @@ class _AdminViewState extends State<AdminView> {
                         content: SizedBox(
                           height: kHeight(context) * 0.5,
                           child: StreamBuilder<List<AlertPivot>>(
-                              stream: streamAlertPivots(),
+                              stream: streamAlertPivots(employee!.companyId),
                               builder: (context, snapshot) {
                                 if (snapshot.hasError) {
                                   return Text('Error: ${snapshot.error}');
@@ -263,16 +281,16 @@ class _AdminViewState extends State<AdminView> {
                                     itemCount: alertPivots.length,
                                     itemBuilder: (context, index) {
                                       return AccordionListItem(
-                                        role: alertPivots[index]
-                                            .employee
-                                            .function,
+                                        role: alertPivots[index].employee.job,
                                         firstname: alertPivots[index]
                                             .employee
                                             .firstname,
                                         lastname: alertPivots[index]
                                             .employee
                                             .lastname,
-                                        urlProfil: "assets/images/user.jpg",
+                                        urlProfil: alertPivots[index]
+                                            .employee
+                                            .profilUrl,
                                         status:
                                             alertPivots[index].alert.alertType,
                                       );
@@ -286,18 +304,39 @@ class _AdminViewState extends State<AdminView> {
                 Positioned(
                     top: kHeight(context) * 0.4,
                     left: kWidth(context) * 0.15,
-                    child: Container(
-                        width: kWidth(context) * 0.7,
-                        height: kWidth(context) * 0.55 / 1,
-                        child: NeedHelpPopup(
-                          name: "Harouna Kinda",
-                          profilUrlSize: 50.0,
-                          role: "Company IT",
-                          alertType: "NEED HELP",
-                          alertStatus: "IN DANGER",
-                          phone: "74578186",
-                          profilUrl: "assets/images/user.jpg",
-                        )))
+                    child: StreamBuilder<List<AlertPivot>>(
+                        stream: streamAlertPivots(employee!.companyId),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          }
+
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {}
+
+                          List<AlertPivot> alertPivots = snapshot.data ?? [];
+
+                          // Faites quelque chose avec les données mises à jour
+                          // (par exemple, mettez à jour votre interface utilisateur)
+
+                          return alertPivots.length != 0
+                              ? Container(
+                                  width: kWidth(context) * 0.7,
+                                  height: kWidth(context) * 0.55 / 1,
+                                  child: NeedHelpPopup(
+                                    name: alertPivots[0].employee.lastname +
+                                        " " +
+                                        alertPivots[0].employee.firstname,
+                                    profilUrlSize: 50.0,
+                                    role: alertPivots[0].employee.job,
+                                    alertType: "NEED HELP",
+                                    alertStatus: "IN DANGER",
+                                    phone: alertPivots[0].employee.phone_number,
+                                    profilUrl:
+                                        alertPivots[0].employee.profilUrl,
+                                  ))
+                              : SizedBox();
+                        }))
               ],
             )),
             Material(

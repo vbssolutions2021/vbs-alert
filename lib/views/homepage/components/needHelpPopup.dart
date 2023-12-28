@@ -111,7 +111,7 @@ class _NeedHelpPopupState extends State<NeedHelpPopup> {
             width: widget.profilUrlSize,
             decoration: BoxDecoration(
                 image: DecorationImage(
-                    fit: BoxFit.cover, image: AssetImage(widget.profilUrl)),
+                    fit: BoxFit.cover, image: NetworkImage(widget.profilUrl)),
                 borderRadius: BorderRadius.circular(100),
                 border: Border.all(color: kSecondaryColor)),
           )),

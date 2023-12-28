@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Alert {
   final Timestamp alertDatetime;
-  final int alertId;
+  final int? alertId;
   final GeoPoint alertLocation;
   final String alertStatus;
   final String alertType;
@@ -10,7 +10,7 @@ class Alert {
 
   Alert({
     required this.alertDatetime,
-    required this.alertId,
+      this.alertId,
     required this.alertLocation,
     required this.alertStatus,
     required this.alertType,

@@ -6,8 +6,6 @@ import 'package:sos_vision/services/notifications_services.dart';
 import 'package:sos_vision/views/constants.dart';
 import 'package:sos_vision/views/homepage/homepage.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:sos_vision/views/loginpage/loginpage.dart';
-import 'package:sqflite/sqflite.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -75,7 +73,7 @@ class _SosVisionAppState extends State<SosVisionApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: kPrimaryColor),
         useMaterial3: true,
       ),
-      home: const Loginpage(),
+      home: const Homepage(),
     );
   }
 }

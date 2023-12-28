@@ -25,6 +25,9 @@ class DefaultTextField extends StatefulWidget {
 
 class _DefaultTextFieldState extends State<DefaultTextField> {
   bool obscurText = true;
+  void initState(){
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
